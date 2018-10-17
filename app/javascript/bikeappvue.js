@@ -11,6 +11,11 @@ Vue.use(VModal, { dynamic: true })
 var BikeDeed = contract(require('../../build/contracts/BikeDeed.json'));
 var Buffer = require('buffer/').Buffer;
 
+const BIKEDEED_BIKES_URL = "https://bikedeed.io/bikes/";
+const BIKEDEED_IPFS_URL = "https://bikedeed.io/ipfs/";
+
+window.app = app;
+
 // register modal component
 Vue.component('modal', {
   template: '#modal-details-template',
@@ -18,6 +23,9 @@ Vue.component('modal', {
     emit: function() {
 			this.$emit('event_child', 1)
 		}
+  },
+  mounted: function() {
+    app.displayQRCode();
   }
 });
 
@@ -28,10 +36,12 @@ Vue.component('modal2', {
     emit: function() {
 			this.$emit('event_child', 1)
 		}
+  },
+  mounted: function() {
+    app.displayQRCode();
   }
 });
 
-window.app = app;
 var app = new Vue({
       el: '#app',
       data: {
@@ -40,9 +50,8 @@ var app = new Vue({
         // Old Ropsten Address
         //contractAddress: '0xdeEe03988C64C3aa4fcFe36896c4272ACF490a33',
         // Mainnet
-        //contractAddress: '0xa7aB6FcA68f407BB5258556af221dE9d8D1A94B5',
+        contractAddress: '0xa7aB6FcA68f407BB5258556af221dE9d8D1A94B5',
         // Ganache Address???
-        contractAddress: '0x7d9e9c47c81c0d700b46e5da16183ac0a15517f7',
         //contractAddress: '0x8fac4e98317322f8069307ccfbb64e8fdd9c180d',
         userAccount: '',
         nametag: '',
@@ -54,6 +63,7 @@ var app = new Vue({
         bikelist: [],
         manufacturers: [],
         web3Enabled: false,
+        web3Injected: false,
         networkLabel: '',
         // display controls
         search: '',
@@ -88,6 +98,16 @@ var app = new Vue({
       },
       mounted:function(){
         console.log("mounted...");
+
+        var accountInterval = setInterval(function() {
+          if (this.web3Injected == true) {
+            if (web3.eth.accounts[0] !== this.userAccount) {
+              this.userAccount = web3.eth.accounts[0];
+              updateInterface();
+            }
+          }
+        }, 500);
+
         this.initWeb3();
         if (this.web3Enabled == true) {
           this.initAccounts();
@@ -107,46 +127,49 @@ var app = new Vue({
         console.log("activated...");
       },
       methods:{
-        initWeb3:function(){
+        updateInterface:function() {
+           window.location.reload(true);
+        },
+        loadCurrentProvider:function () {
+
+        },
+        initWeb3:function() {
           // Checking if Web3 has been injected by the browser (Mist/MetaMask)
           let self = this;
           if (typeof web3 !== 'undefined') {
             console.warn("Using injected web3")
+            this.web3Injected = true;
             // Use Mist/MetaMask's provider
             window.web3 = new Web3(web3.currentProvider);
-
-            var networkId = web3.version.network;
-
-            console.log('networkId: ' + networkId);
-
-            switch (networkId) {
-            case "1":
-              this.networkLabel = "BikeDeed (Mainnet)";
-              break;
-            case "2":
-              this.networkLabel = "You are on the Morden Network - Please switch to Mainnet";
-              break;
-            case "3":
-              this.networkLabel = "You are on the Ropsten Network - Please switch to Mainnet";
-              break;
-            case "4":
-              this.networkLabel = "You are on the Rinkeby Network - Please switch to Mainnet";
-              break;
-            case "42":
-              this.networkLabel = "You are on the Kovan Network - Please switch to Mainnet";
-              break;
-            default:
-              this.networkLabel = "BikeDeed";
-            }
-            this.web3Enabled = true;
           } else {
-            console.warn("No web3 detected. .");
-            // fallback - use your fallback strategy (local node / hosted node + in-dapp id mgmt / fail)
-            this.web3Enabled = false;
-            this.networkLabel = "Ethereum is not enabled. Go to <a href=/bikes>read-only site.</a>";
-            window.location = "https://bikedeed.io/bikes";
-            //window.web3 = new Web3(new Web3.providers.HttpProvider("http://127.0.0.1:8545"));
+            console.warn("No injected web3 detected, using infura.");
+            window.web3 = new Web3(
+              new Web3.providers.HttpProvider('https://mainnet.infura.io/uHJFDlXprJ52gu4uK9oA')
+            );
           }
+          var networkId = web3.version.network;
+          console.log('networkId: ' + networkId);
+
+          switch (networkId) {
+          case "1":
+            this.networkLabel = "";
+            break;
+          case "2":
+            this.networkLabel = "You are on the Morden Network - Please switch to Mainnet";
+            break;
+          case "3":
+            this.networkLabel = "You are on the Ropsten Network - Please switch to Mainnet";
+            break;
+          case "4":
+            this.networkLabel = "You are on the Rinkeby Network - Please switch to Mainnet";
+            break;
+          case "42":
+            this.networkLabel = "You are on the Kovan Network - Please switch to Mainnet";
+            break;
+          default:
+            this.networkLabel = "";
+          }
+          this.web3Enabled = true;
         },
         initAccounts:function(){
           let self = this;
@@ -183,6 +206,43 @@ var app = new Vue({
           }
           return false;
         },
+        loadBikeWithId: async function(deedId) {
+        let self = this;
+        const loadBike = async (deedId) => {
+          let deed = await BikeDeed.at(this.contractAddress);
+          const FIELD_NAME  = 0
+          const FIELD_SERIAL_NUMBER = 1
+          const FIELD_MANUFACTURER = 2
+          const FIELD_IPFS_HASH = 3
+          const FIELD_DATE_CREATED = 4
+          const FIELD_DATE_DELETED = 5
+
+          var bikeDeed = await deed.deeds(deedId);
+          try {
+            var bikeOwner = await deed.ownerOf(deedId);
+          } catch(error) {
+            // probably a deleted token and therefore has no owner.
+            console.log(error);
+            return error;
+          }
+          var url = await deed.deedUri(deedId);
+          const bike = {
+            id: deedId,
+            name:  web3.toAscii(bikeDeed[FIELD_NAME]),
+            serialNumber: web3.toAscii(bikeDeed[FIELD_SERIAL_NUMBER]),
+            manufacturer: web3.toAscii(bikeDeed[FIELD_MANUFACTURER]).replace(/\u0000/g, ''),
+            ipfsHash: bikeDeed[FIELD_IPFS_HASH],
+            dateCreated: bikeDeed[FIELD_DATE_CREATED],
+            dateDeleted: bikeDeed[FIELD_DATE_DELETED],
+            owner: bikeOwner,
+            bikeUrl: url
+          }
+          // HACK ALERT
+          bike.bikeUrl = BIKEDEED_IPFS_URL + bike.ipfsHash;
+          this.singleBike = bike;
+        }
+        await loadBike(deedId);
+      },
       loadAllBikes: function() {
         let self = this;
         this.allbikes.length=0;
@@ -218,6 +278,8 @@ var app = new Vue({
               owner: bikeOwner,
               bikeUrl: url
             }
+            // HACK ALERT
+            bike.bikeUrl = BIKEDEED_IPFS_URL + bike.ipfsHash;
             if (web3.isAddress(bikeOwner)) {
               this.allbikes.push(bike);
             }
@@ -278,7 +340,7 @@ var app = new Vue({
         if (this.userAccount == bike.owner) {
           this.showMyDetailsModal=true;
           this.displayRegistrationComponents=true;
-          this.processingMessage = "Transfer to Address:"
+          this.processingMessage = ""
         }
         else {
           this.showDetailsModal=true;
@@ -287,11 +349,28 @@ var app = new Vue({
      displayMetaData:function() {
        window.open(this.bikeUrl, "proofofownershipwindow", "location=yes,height=570,width=520,scrollbars=yes,status=yes");
      },
+    displayQRCode: function() {
+      var QRCode = require('qrcode');
+      var opts = {
+        width: 100,
+        height: 100,
+        errorCorrectionLevel: 'H'
+      };
+      var canvas = document.getElementById('canvas');
+      QRCode.toCanvas(canvas, BIKEDEED_BIKES_URL + this.bikeId, opts, function (error) {
+        if (error) {
+          console.error(error);
+        }
+        console.log('success!');
+      });
+    },
      confirmRegistration:function() {
        this.initAccounts();
        // HACK ALERT: prepend 'S' if serialNumber does not contain a letter.
        // this is due to a bug in the contract.
-       var letter = /^[a-zA-Z]+$/;
+
+       var letter = /.*[a-zA-Z].*/;
+       //var letter = /^[a-zA-Z]+$/;
        if (!this.bikeSerialNumber.match(letter))  {
          this.bikeSerialNumber = 'S' + this.bikeSerialNumber;
        }
@@ -347,12 +426,14 @@ var app = new Vue({
              if(res instanceof Error) {
                alert("No QR code found. Please make sure the QR code is within the camera's frame and try again.");
              } else {
-               var strarray = res.split(" ");
-               if (strarray[0] != "bikedeedid" ) {
+               var len = BIKEDEED_BIKES_URL.length;
+               var s1 = res.substr(0, len);
+               var s2 = res.substr(len);
+               if (s1 != BIKEDEED_BIKES_URL ) {
                  alert("This is not a BikeDeed QR Code.");
                  reject(new Exception("This is not a Bikeed QR Code."));
                }
-               var deedId = strarray[1];
+               var deedId = s2;
                resolve(deedId);
              }
            }
@@ -361,7 +442,6 @@ var app = new Vue({
          reader.readAsDataURL(inputFile);
          });
        };
-
        const handleQRCode = async () => {
          var self = this;
          const deedId = await getQRCode(node.qrcodeinput.files[0]);
@@ -370,17 +450,21 @@ var app = new Vue({
 
        handleQRCode();
      },
-     verifyOwnership: function(deedId) {
+     verifyOwnership: async function(deedId) {
         var self = this;
         this.initAccounts();
-        for (let index = 0; index < this.allbikes.length; ++index) {
-          const bike = this.allbikes[index];
-          if (bike.id == deedId) {
-            this.showBikeDetails(bike);
-            return;
+        try {
+          let bike = await this.loadBikeWithId(deedId);
+          if (this.singleBike) {
+	    this.showBikeDetails(this.singleBike);
+          }
+          else {
+            alert("Bike with deedid " + deedId + " not found");
           }
         }
-        alert("No bike found for deed ID: " + deedId);
+        catch(error) {
+          alert(error + ": No bike found for deed ID: " + deedId);
+        }
      },
      transferOwnership: function() {
        const transfer = async () => {
@@ -389,9 +473,7 @@ var app = new Vue({
          let deed = await BikeDeed.at(this.contractAddress);
          this.displayRegistrationComponents=false;
          this.processingMessage = "Transferring bike deed to " + this.newOwnerAddress + ". This may take a while...";
-         alert("processingMessage");
          this.showSpinner = true;
-         alert("showSpinner");
          try {
            //alert("creating Bike deed with "  + this.bikeSerialNumber + " " +  this.bikeManufacturer + " " +  this.bikeIpfsHash + " " +  this.userAccount);
            let result = await deed.transfer(this.newOwnerAddress, this.bikeId);
@@ -403,7 +485,6 @@ var app = new Vue({
            this.showSpinner = false;
            return true;
          }
-         alert("congrates");
          this.processingMessage = "Congratulations!  Your bike has been transferred to " + this.newOwnerAddress + "!";
          this.showSpinner = false;
          this.bikeOwner = this.newOwnerAddress;
@@ -431,19 +512,20 @@ var app = new Vue({
          var self = this;
          BikeDeed.defaults({from: this.userAccount, gas: 900000 });
          let deed = await BikeDeed.at(this.contractAddress);
-         this.status = "Registering bike deed on the blockchain. This may take a while...";
+         this.processingMessage = "Registering bike deed on the blockchain. This may take a while...";
          this.showSpinner = true;
          try {
            //alert("creating Bike deed with "  + this.bikeSerialNumber + " " +  this.bikeManufacturer + " " +  this.bikeIpfsHash + " " +  this.userAccount);
            let result = await deed.create(this.bikeSerialNumber, this.bikeManufacturer, this.bikeIpfsHash, this.userAccount);
          } catch (error) {
            console.log(error.message);
-           this.status = error.message;
            this.showSpinner = false;
+           error.message = "You must be logged into MetaMask for this feature.";
+           this.processingMessage = error.message;
            alert(error.message);
            return false;
          }
-         this.status = "Congratulations!  Your bike has been registered on the blockchain.";
+         this.processingMessage = "Congratulations!  Your bike has been registered on the blockchain.";
          this.showSpinner = false;
          this.clearRegistrationForm();
          return true;
@@ -451,7 +533,6 @@ var app = new Vue({
 
        // Not sure why this has to be done.
        this.initAccounts();
-
 
        if (!registerBikeOnBlockchain()) {
          return;
@@ -468,6 +549,7 @@ var app = new Vue({
         this.showDetailsModal = false;
         this.bikeManufacturerSelected = false;
         this.pooFileLoaded = false;
+        this.processingMessage = '';
      },
      pooFileSelectedEvent:function(event) {
         this.pooFileSelected = true;
@@ -507,7 +589,7 @@ var app = new Vue({
              return;
            }
            this.bikeIpfsHash = result[0].hash;
-           this.bikeUrl = "https://ipfs.io/ipfs/" + this.bikeIpfsHash;
+           this.bikeUrl = BIKEDEED_IPFS_URL + this.bikeIpfsHash;
            this.showUploadSpinner = false;
            this.pooFileLoaded = true;
         });

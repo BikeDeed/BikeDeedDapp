@@ -12,19 +12,21 @@
     integrity="sha384-5bXRcW9kyxxnSMbOoHzraqa7Z0PQWIao+cgeg327zit1hz5LZCEbIMx/LWKPReuB"
     crossorigin="anonymous"></script>
 <style>
-body, h1,h2,h3,h4,h5,h6 {font-family: "Montserrat", sans-serif}
+body { padding: 10px; }
+h1,h2,h3,h4,h5,h6 {font-family: "Montserrat", sans-serif}
 app {
     position: relative;
 }
 img {
     border: 1px solid #ddd; /* Gray border */
-    border-radius: 4px;  /* Rounded border */
+    border-radius: 8px;  /* Rounded border */
     padding: 5px; /* Some padding */
     width: 150px; /* Set a small width */
 }
 .w3-row-padding img {margin-bottom: 12px}
 /* Set the width of the sidebar to 120px */
 .w3-sidebar {width: 120px;background: #222;}
+/* Add a left margin to the "page content" that matches the width of the sidebar (120px) */
 /* Remove margins from "page content" on small screens */
 @media only screen and (max-width: 600px) {#main {margin-left: 0}}
 h4 span { font-size:12px; }
@@ -53,11 +55,11 @@ h4 span { font-size:12px; }
 
           <div class="modal-footer">
             <slot name="footer">
-              <button class="w3-bar-item w3-button w3-padding-small w3-hover-black" v-on:click="emit">
+              <button class="modal-button-default" v-on:click="emit">
                 Confirm Registration
               </button>
-              <p>{{ processingMessage }} <i v-show="showSpinner" class="fa fa-spinner fa-spin" style="font-size:24px;color:white"></i></p>
-              <button class="w3-bar-item w3-button w3-padding-small w3-hover-black" @click="$emit('close')">
+
+              <button class="modal-button-default" @click="$emit('close')">
                 Cancel
               </button>
             </slot>
@@ -71,18 +73,10 @@ h4 span { font-size:12px; }
 <div id="app" v-cloak>
   <nav class="w3-topnav w3-small w3-center">
     <a href="index.html" class="w3-bar-item w3-button w3-padding-small w3-hover-black">
-      <p>HOME</p>
+      LIST BIKES
     </a>
-    <a href="register.html" class="w3-bar-item w3-button w3-padding-small w3-hover-black">
-      <p>ADD A BIKE</p>
-    </a>
-    <div v-if="isMobile()">
-      <a href="proveit.html" class="w3-bar-item w3-button w3-padding-small w3-hover-black">
-        <p>SCAN A BIKE</p>
-      </a>
-    </div>
-    <a href="contact.html" class="w3-bar-item w3-button w3-padding-small w3-hover-black">
-      <p>FAQ</p>
+    <a href="proveit.html" class="w3-bar-item w3-button w3-padding-small w3-hover-black">
+      SCAN A BIKE
     </a>
   </nav>
 
@@ -90,16 +84,11 @@ h4 span { font-size:12px; }
 <div class="w3-padding-small" id="main">
   <!-- Header/Home -->
   <header class="w3-container w3-padding-small w3-center w3-black" id="home">
-    <h1 class="w3-jumbo"><i class="fa fa-bicycle"></i></h1>
+    <a href="https://bikedeed.io"><img src="bikedeedlogo.png"></a>
     <div v-if="web3Enabled">
       <p>{{ networkLabel }} </p>
     </div>
-    <div v-else>
-      <p>BikeDeed</p>
-      <div class="w3-content w3-center w3-text-grey w3-padding-small">
-        <p>Ethereum is not enabled on your browser. Redirecting you to read-only site <i class="fa fa-spinner fa-spin" style="font-size:24px;color:white"></i></p>
-      </div>
-    </div>
+   <link rel="shortcut icon" href="favicon.png" >
   </header>
 
   <div class="w3-content w3-center w3-text-grey w3-padding-small" id="about">
@@ -128,16 +117,18 @@ h4 span { font-size:12px; }
 <input type="file" name="pooFile" id="pooFile" @change="pooFileSelectedEvent($event)">
 
 <br>
-<button v-show="pooFileSelected" type="button" class="w3-padding-small w3-button w3-hover-black" v-on:click="uploadFileToIpfs()">Upload File to IPFS</button>
+<button v-show="pooFileSelected" type="button" class="modal-button-default" v-on:click="uploadFileToIpfs()">Upload File to IPFS</button>
 <p><i v-show="showUploadSpinner" class="fa fa-spinner fa-spin" style="font-size:24px;color:white"></i></p>
 <br>
 <button v-show="pooFileLoaded" type="button" class="w3-padding-small w3-button w3-hover-black" v-on:click="displayMetaData()">{{ bikeUrl }}</button>
+<p><img v-show="pooFileLoaded" v-bind:src="bikeUrl" v-on:click="displayMetaData()"></img></p>
 <br>
-<button v-show="pooFileLoaded" type="button" class="w3-padding-small w3-button w3-hover-black" v-on:click="confirmRegistration()">Register Bike</button>
+<button v-show="pooFileLoaded" type="button" class="modal-button-default" v-on:click="confirmRegistration()">Register Bike</button>
 </template>
 </template>
-<button v-show="bikeManufacturer!='000'" type="button" class="w3-padding-small w3-button w3-hover-black" v-on:click="clearRegistrationForm()">Clear</button>
+<button v-show="bikeManufacturer!='000'" type="button" class="modal-button-default" v-on:click="clearRegistrationForm()">Clear</button>
 </form>
+<p>{{ processingMessage }} <i v-show="showSpinner" class="fa fa-spinner fa-spin" style="font-size:24px;color:white"></i></p>
 
 <modal v-on:event_child="registerBike" v-if="showDetailsModal" @close="showDetailsModal = false">
   <h3 slot="header">Bike Details</h3>
@@ -145,8 +136,7 @@ h4 span { font-size:12px; }
     <p>Serial Number: {{ bikeSerialNumber }}</p>
     <p>Manufacturer: {{ lookupManufacturerLabel(bikeManufacturer) }}</p>
     <p>Owner: {{ userAccount }}</p>
-    <p>Proof of Ownership</p><img v-bind:src="bikeUrl" v-on:click="displayMetaData()"></img>
-    <button type="button" class="w3-padding-small w3-button w3-hover-black" v-on:click="displayMetaData()">{{ bikeUrl }}</button>
+    <p><img v-bind:src="bikeUrl" v-on:click="displayMetaData()"></img></p>
   </span>
 </modal>
 
