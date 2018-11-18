@@ -3,7 +3,7 @@ module.exports = function(callback) {
 var Web3 = require('web3');
 var provider = new Web3.providers.HttpProvider("http://localhost:8545");
 var contract = require('truffle-contract');
-var BikeDeed = contract(require('../build/contracts/BikeDeed.json'));
+var ItemDeed = contract(require('../build/contracts/ItemDeed.json'));
 var web3 = new Web3(provider);
 
 const _creator = web3.eth.accounts[0];
@@ -26,7 +26,7 @@ const _ipfs8 = "QmRgCm6EBtqSeCNKboZYH7NhncdpD7nKheYJR8NDX8rCqw";
 
 const _manufacturer1 = "S25"; //"Specialized";
 const _manufacturer2 = "M20"; //"Moots Cycles";
-const _manufacturer3 = "S02"; //"Santa Cruz Bikes";
+const _manufacturer3 = "S02"; //"Santa Cruz Items";
 const _manufacturer4 = "G06"; //"Giant Manufacturing";
 const _manufacturer5 = "S06"; //"Schwinn Bicycle Company";
 const _manufacturer6 = "B08"; //"Bianchi";
@@ -48,15 +48,15 @@ const _price5 = 1.01;
 const _price6 = 1.002;
 
 
-BikeDeed.setProvider(provider);
-BikeDeed.defaults({from: _creator, gas: 900000 });
+ItemDeed.setProvider(provider);
+ItemDeed.defaults({from: _creator, gas: 900000 });
 
 const populateDeeds = async () => {
-  let deed = await BikeDeed.deployed();
+  let deed = await ItemDeed.deployed();
   let name = await deed.name();
 
   try {
-    // These will appear when you click the "All Bikes" link or when the index.html first loads.
+    // These will appear when you click the "All Items" link or when the index.html first loads.
     await deed.create(_serialNumber1, _manufacturer1, _ipfs1, _owner1);
     await deed.create(_serialNumber2, _manufacturer2, _ipfs2, _owner2);
     await deed.create(_serialNumber3, _manufacturer3, _ipfs3, _owner3);
@@ -64,7 +64,7 @@ const populateDeeds = async () => {
     await deed.create(_serialNumber5, _manufacturer5, _ipfs5, _owner5);
     await deed.create(_serialNumber6, _manufacturer6, _ipfs6, _owner6);
     await deed.create(_serialNumber7, _manufacturer7, _ipfs7, _owner7);
-    // Optionally add your PERSONAL bike(s) here, so the "My Bikes" link will work.
+    // Optionally add your PERSONAL item(s) here, so the "My Items" link will work.
     await deed.create("My$3r1AlnuM53R", "S25", _ipfs8, "0xbf00309c721accdf1f44f60c601b99bf2863b338");
     await deed.create("My$3r1AlnuM53R", "F05", _ipfs8, "0xbf00309c721accdf1f44f60c601b99bf2863b338");
 

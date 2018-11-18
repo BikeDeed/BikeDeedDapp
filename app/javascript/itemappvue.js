@@ -2,17 +2,17 @@
 import { default as Web3} from 'web3';
 import { default as contract } from 'truffle-contract'
 import Vue from './vue'
-import bikemanufacturersfromfile from './bikemanufacturers.json'
+import itemmanufacturersfromfile from './itemmanufacturers.json'
 import VModal from 'vue-js-modal'
 
 Vue.use(VModal, { dynamic: true })
 //import Modal from '../Modal.vue'
 
-var BikeDeed = contract(require('../../build/contracts/BikeDeed.json'));
+var ItemDeed = contract(require('../../build/contracts/ItemDeed.json'));
 var Buffer = require('buffer/').Buffer;
 
-const BIKEDEED_BIKES_URL = "https://bikedeed.io/bikes/";
-const BIKEDEED_IPFS_URL = "https://bikedeed.io/ipfs/";
+const ITEMDEED_ITEMS_URL = "https://permanonce.io/items/";
+const ITEMDEED_IPFS_URL = "https://permanonce.io/ipfs/";
 
 window.app = app;
 
@@ -57,10 +57,10 @@ var app = new Vue({
         nametag: '',
         status: '',
         message: '',
-        allbikes: [],
-        mybikes: [],
-        singleBike: '',
-        bikelist: [],
+        allitems: [],
+        myitems: [],
+        singleItem: '',
+        itemlist: [],
         manufacturers: [],
         web3Enabled: false,
         web3Injected: false,
@@ -69,20 +69,20 @@ var app = new Vue({
         search: '',
         showDetailsModal: false,
         showMyDetailsModal: false,
-        bikeManufacturerSelected: false,
+        itemManufacturerSelected: false,
         pooFileLoaded: false,
         pooFileSelected: false,
         displayRegistrationComponents: true,
         showSpinner: false,
         showUploadSpinner: false,
-        // specific bike details
-        bikeOwner: '',
-        bikeSerialNumber: '',
-        bikeId: '',
-        bikeManufacturer: '000', // default
-        bikeIpfsHash: '',
-        bikeDateCreated: '',
-        bikeUrl: '',
+        // specific item details
+        itemOwner: '',
+        itemSerialNumber: '',
+        itemId: '',
+        itemManufacturer: '000', // default
+        itemIpfsHash: '',
+        itemDateCreated: '',
+        itemUrl: '',
         // miscellaneous
         newOwnerAddress: '',
         processingMessage: ''
@@ -112,7 +112,7 @@ var app = new Vue({
         if (this.web3Enabled == true) {
           this.initAccounts();
           this.initContract();
-          this.loadAllBikes();
+          this.loadAllItems();
           this.initManufacturers();
           //alert("performed mounted functions");
         }
@@ -173,13 +173,13 @@ var app = new Vue({
         },
         initAccounts:function(){
           let self = this;
-          BikeDeed.setProvider(web3.currentProvider);
+          ItemDeed.setProvider(web3.currentProvider);
           this.userAccount = web3.eth.accounts[0];
         },
         initContract:function(){
           let self = this;
           const loadContract = async () => {
-            let deed = await BikeDeed.at(this.contractAddress);
+            let deed = await ItemDeed.at(this.contractAddress);
             let name = await deed.name();
             this.nametag = name;
           }
@@ -206,10 +206,10 @@ var app = new Vue({
           }
           return false;
         },
-        loadBikeWithId: async function(deedId) {
+        loadItemWithId: async function(deedId) {
         let self = this;
-        const loadBike = async (deedId) => {
-          let deed = await BikeDeed.at(this.contractAddress);
+        const loadItem = async (deedId) => {
+          let deed = await ItemDeed.at(this.contractAddress);
 
           const FIELD_SERIAL_NUMBER = 0
           const FIELD_MANUFACTURER = 1
@@ -217,36 +217,36 @@ var app = new Vue({
           const FIELD_DATE_CREATED = 3
           const FIELD_DATE_DELETED = 4
 
-          var bikeDeed = await deed.deeds(deedId);
+          var itemDeed = await deed.deeds(deedId);
           try {
-            var bikeOwner = await deed.ownerOf(deedId);
+            var itemOwner = await deed.ownerOf(deedId);
           } catch(error) {
             // probably a deleted token and therefore has no owner.
             console.log(error);
             return error;
           }
           var url = await deed.deedUri(deedId);
-          const bike = {
+          const item = {
             id: deedId,
-            serialNumber: bikeDeed[FIELD_SERIAL_NUMBER],
-            manufacturer: bikeDeed[FIELD_MANUFACTURER],
-            ipfsHash: bikeDeed[FIELD_IPFS_HASH],
-            dateCreated: bikeDeed[FIELD_DATE_CREATED],
-            dateDeleted: bikeDeed[FIELD_DATE_DELETED],
-            owner: bikeOwner,
-            bikeUrl: url
+            serialNumber: itemDeed[FIELD_SERIAL_NUMBER],
+            manufacturer: itemDeed[FIELD_MANUFACTURER],
+            ipfsHash: itemDeed[FIELD_IPFS_HASH],
+            dateCreated: itemDeed[FIELD_DATE_CREATED],
+            dateDeleted: itemDeed[FIELD_DATE_DELETED],
+            owner: itemOwner,
+            itemUrl: url
           }
           // HACK ALERT
-          bike.bikeUrl = BIKEDEED_IPFS_URL + bike.ipfsHash;
-          this.singleBike = bike;
+          item.itemUrl = ITEMDEED_IPFS_URL + item.ipfsHash;
+          this.singleItem = item;
         }
-        await loadBike(deedId);
+        await loadItem(deedId);
       },
-      loadAllBikes: function() {
+      loadAllItems: function() {
         let self = this;
-        this.allbikes.length=0;
-        const loadBikes = async () => {
-          let deed = await BikeDeed.at(this.contractAddress);
+        this.allitems.length=0;
+        const loadItems = async () => {
+          let deed = await ItemDeed.at(this.contractAddress);
           let deedIds = await deed.ids();
 
           const FIELD_SERIAL_NUMBER = 0
@@ -257,33 +257,33 @@ var app = new Vue({
 
           for (let i = 0; i < deedIds.length; i++) {
             var deedId = deedIds[i];
-            var bikeDeed = await deed.deeds(deedId);
+            var itemDeed = await deed.deeds(deedId);
             try {
-              var bikeOwner = await deed.ownerOf(deedId);
+              var itemOwner = await deed.ownerOf(deedId);
             } catch(error) {
               // probably a deleted token and therefore has no owner.
               continue;
             }
             var url = await deed.deedUri(deedId);
-            const bike = {
+            const item = {
               id: deedId,
-              serialNumber: bikeDeed[FIELD_SERIAL_NUMBER],
-              manufacturer: bikeDeed[FIELD_MANUFACTURER],
-              ipfsHash: bikeDeed[FIELD_IPFS_HASH],
-              dateCreated: bikeDeed[FIELD_DATE_CREATED],
-              dateDeleted: bikeDeed[FIELD_DATE_DELETED],
-              owner: bikeOwner,
-              bikeUrl: url
+              serialNumber: itemDeed[FIELD_SERIAL_NUMBER],
+              manufacturer: itemDeed[FIELD_MANUFACTURER],
+              ipfsHash: itemDeed[FIELD_IPFS_HASH],
+              dateCreated: itemDeed[FIELD_DATE_CREATED],
+              dateDeleted: itemDeed[FIELD_DATE_DELETED],
+              owner: itemOwner,
+              itemUrl: url
             }
             // HACK ALERT
-            bike.bikeUrl = BIKEDEED_IPFS_URL + bike.ipfsHash;
-            if (web3.isAddress(bikeOwner)) {
-              this.allbikes.push(bike);
+            item.itemUrl = ITEMDEED_IPFS_URL + item.ipfsHash;
+            if (web3.isAddress(itemOwner)) {
+              this.allitems.push(item);
             }
           }
         }
-        loadBikes();
-        this.bikelist = this.allbikes;
+        loadItems();
+        this.itemlist = this.allitems;
       },
       lookupManufacturerLabel: function (value1) {
         var i;
@@ -295,10 +295,10 @@ var app = new Vue({
         }
         return value1;
       },
-      bikeLabel: function (bike) {
+      itemLabel: function (item) {
         var i;
         for (i = 0; i < this.manufacturers.length; i++) {
-          var value1 = bike.manufacturer;
+          var value1 = item.manufacturer;
           var value2 = this.manufacturers[i].value;
           if (value1.trim() == value2.trim()) {
             return this.manufacturers[i].text;
@@ -307,34 +307,34 @@ var app = new Vue({
         return value1;
       },
       initManufacturers: function() {
-         this.manufacturers = bikemanufacturersfromfile;
+         this.manufacturers = itemmanufacturersfromfile;
       },
-      showMyBikes:function() {
+      showMyItems:function() {
         this.initAccounts();
-        this.mybikes.length = 0;
-        for (let index = 0; index < this.allbikes.length; ++index) {
-          let bike = this.allbikes[index];
-          if (bike.owner == this.userAccount) {
-            this.mybikes.push(bike);
+        this.myitems.length = 0;
+        for (let index = 0; index < this.allitems.length; ++index) {
+          let item = this.allitems[index];
+          if (item.owner == this.userAccount) {
+            this.myitems.push(item);
           }
         }
-        this.bikelist = this.mybikes;
+        this.itemlist = this.myitems;
       },
-      showAllBikes:function() {
-        this.mybikes.length = 0;
-        this.bikelist = this.allbikes;
+      showAllItems:function() {
+        this.myitems.length = 0;
+        this.itemlist = this.allitems;
       },
-      showBikeDetails:function(bike) {
+      showItemDetails:function(item) {
        // Not sure why this has to be done.
         this.initAccounts();
-        this.bikeId = bike.id;
-        this.bikeOwner = bike.owner;
-        this.bikeSerialNumber = bike.serialNumber;
-        this.bikeManufacturer = bike.manufacturer;
-        this.bikeIpfsHash = bike.ipfsHash;
-        this.bikeDateCreated = new Date(bike.dateCreated*1000);
-        this.bikeUrl = bike.bikeUrl;
-        if (this.userAccount == bike.owner) {
+        this.itemId = item.id;
+        this.itemOwner = item.owner;
+        this.itemSerialNumber = item.serialNumber;
+        this.itemManufacturer = item.manufacturer;
+        this.itemIpfsHash = item.ipfsHash;
+        this.itemDateCreated = new Date(item.dateCreated*1000);
+        this.itemUrl = item.itemUrl;
+        if (this.userAccount == item.owner) {
           this.showMyDetailsModal=true;
           this.displayRegistrationComponents=true;
           this.processingMessage = ""
@@ -344,7 +344,7 @@ var app = new Vue({
         }
      },
      displayMetaData:function() {
-       window.open(this.bikeUrl, "proofofownershipwindow", "location=yes,height=570,width=520,scrollbars=yes,status=yes");
+       window.open(this.itemUrl, "proofofownershipwindow", "location=yes,height=570,width=520,scrollbars=yes,status=yes");
      },
     displayQRCode: function() {
       var QRCode = require('qrcode');
@@ -354,7 +354,7 @@ var app = new Vue({
         errorCorrectionLevel: 'H'
       };
       var canvas = document.getElementById('canvas');
-      QRCode.toCanvas(canvas, BIKEDEED_BIKES_URL + this.bikeId, opts, function (error) {
+      QRCode.toCanvas(canvas, ITEMDEED_ITEMS_URL + this.itemId, opts, function (error) {
         if (error) {
           console.error(error);
         }
@@ -368,22 +368,22 @@ var app = new Vue({
 
        var letter = /.*[a-zA-Z].*/;
        //var letter = /^[a-zA-Z]+$/;
-       if (!this.bikeSerialNumber.match(letter))  {
-         this.bikeSerialNumber = 'S' + this.bikeSerialNumber;
+       if (!this.itemSerialNumber.match(letter))  {
+         this.itemSerialNumber = 'S' + this.itemSerialNumber;
        }
        this.showDetailsModal = true;
      },
-     deleteBikeDeed: function() {
+     deleteItemDeed: function() {
        const destroyDeed = async () => {
          var self = this;
-         BikeDeed.defaults({from: this.userAccount, gas: 900000 });
-         let deed = await BikeDeed.at(this.contractAddress);
-         this.processingMessage = "Deleting bike deed. This may take a while...";
+         ItemDeed.defaults({from: this.userAccount, gas: 900000 });
+         let deed = await ItemDeed.at(this.contractAddress);
+         this.processingMessage = "Deleting item deed. This may take a while...";
          this.showSpinner=true;
          this.displayRegistrationComponents = false;
          this.sleep(1000);
          try {
-           let result = await deed.destroy(this.bikeId);
+           let result = await deed.destroy(this.itemId);
          } catch (error) {
            console.log(error.message);
            this.processingMessage = error.message;
@@ -392,12 +392,12 @@ var app = new Vue({
            this.displayRegistrationComponents = true;
            return;
          }
-         this.processingMessage = "Congratulations!  Your bike has been deleted!";
-         this.bikeOwner = this.newOwnerAddress;
+         this.processingMessage = "Congratulations!  Your item has been deleted!";
+         this.itemOwner = this.newOwnerAddress;
          this.showSpinner=false;
          this.displayRegistrationComponents = false;
          this.initAccounts();
-         this.loadAllBikes();
+         this.loadAllItems();
        }
 
        // Not sure why this has to be done.
@@ -423,12 +423,12 @@ var app = new Vue({
              if(res instanceof Error) {
                alert("No QR code found. Please make sure the QR code is within the camera's frame and try again.");
              } else {
-               var len = BIKEDEED_BIKES_URL.length;
+               var len = ITEMDEED_ITEMS_URL.length;
                var s1 = res.substr(0, len);
                var s2 = res.substr(len);
-               if (s1 != BIKEDEED_BIKES_URL ) {
-                 alert("This is not a BikeDeed QR Code.");
-                 reject(new Exception("This is not a Bikeed QR Code."));
+               if (s1 != ITEMDEED_ITEMS_URL ) {
+                 alert("This is not a ItemDeed QR Code.");
+                 reject(new Exception("This is not a Itemed QR Code."));
                }
                var deedId = s2;
                resolve(deedId);
@@ -451,29 +451,29 @@ var app = new Vue({
         var self = this;
         this.initAccounts();
         try {
-          let bike = await this.loadBikeWithId(deedId);
-          if (this.singleBike) {
-	    this.showBikeDetails(this.singleBike);
+          let item = await this.loadItemWithId(deedId);
+          if (this.singleItem) {
+	    this.showItemDetails(this.singleItem);
           }
           else {
-            alert("Bike with deedid " + deedId + " not found");
+            alert("Item with deedid " + deedId + " not found");
           }
         }
         catch(error) {
-          alert(error + ": No bike found for deed ID: " + deedId);
+          alert(error + ": No item found for deed ID: " + deedId);
         }
      },
      transferOwnership: function() {
        const transfer = async () => {
          var self = this;
-         BikeDeed.defaults({from: this.userAccount, gas: 900000 });
-         let deed = await BikeDeed.at(this.contractAddress);
+         ItemDeed.defaults({from: this.userAccount, gas: 900000 });
+         let deed = await ItemDeed.at(this.contractAddress);
          this.displayRegistrationComponents=false;
-         this.processingMessage = "Transferring bike deed to " + this.newOwnerAddress + ". This may take a while...";
+         this.processingMessage = "Transferring item deed to " + this.newOwnerAddress + ". This may take a while...";
          this.showSpinner = true;
          try {
-           //alert("creating Bike deed with "  + this.bikeSerialNumber + " " +  this.bikeManufacturer + " " +  this.bikeIpfsHash + " " +  this.userAccount);
-           let result = await deed.transfer(this.newOwnerAddress, this.bikeId);
+           //alert("creating Item deed with "  + this.itemSerialNumber + " " +  this.itemManufacturer + " " +  this.itemIpfsHash + " " +  this.userAccount);
+           let result = await deed.transfer(this.newOwnerAddress, this.itemId);
          } catch (error) {
            console.log(error.message);
            this.processingMessage = error.message;
@@ -482,9 +482,9 @@ var app = new Vue({
            this.showSpinner = false;
            return true;
          }
-         this.processingMessage = "Congratulations!  Your bike has been transferred to " + this.newOwnerAddress + "!";
+         this.processingMessage = "Congratulations!  Your item has been transferred to " + this.newOwnerAddress + "!";
          this.showSpinner = false;
-         this.bikeOwner = this.newOwnerAddress;
+         this.itemOwner = this.newOwnerAddress;
          return true;
        }
 
@@ -502,18 +502,18 @@ var app = new Vue({
          return true;
        }
      },
-     registerBike: function() {
+     registerItem: function() {
        this.showDetailsModal = false;
-       //alert("registering bike")
-       const registerBikeOnBlockchain = async () => {
+       //alert("registering item")
+       const registerItemOnBlockchain = async () => {
          var self = this;
-         BikeDeed.defaults({from: this.userAccount, gas: 900000 });
-         let deed = await BikeDeed.at(this.contractAddress);
-         this.processingMessage = "Registering bike deed on the blockchain. This may take a while...";
+         ItemDeed.defaults({from: this.userAccount, gas: 900000 });
+         let deed = await ItemDeed.at(this.contractAddress);
+         this.processingMessage = "Registering item deed on the blockchain. This may take a while...";
          this.showSpinner = true;
          try {
-           //alert("creating Bike deed with "  + this.bikeSerialNumber + " " +  this.bikeManufacturer + " " +  this.bikeIpfsHash + " " +  this.userAccount);
-           let result = await deed.create(this.bikeSerialNumber, this.bikeManufacturer, this.bikeIpfsHash, this.userAccount);
+           //alert("creating Item deed with "  + this.itemSerialNumber + " " +  this.itemManufacturer + " " +  this.itemIpfsHash + " " +  this.userAccount);
+           let result = await deed.create(this.itemSerialNumber, this.itemManufacturer, this.itemIpfsHash, this.userAccount);
          } catch (error) {
            console.log(error.message);
            this.showSpinner = false;
@@ -522,7 +522,7 @@ var app = new Vue({
            alert(error.message);
            return false;
          }
-         this.processingMessage = "Congratulations!  Your bike has been registered on the blockchain.";
+         this.processingMessage = "Congratulations!  Your item has been registered on the blockchain.";
          this.showSpinner = false;
          this.clearRegistrationForm();
          return true;
@@ -531,7 +531,7 @@ var app = new Vue({
        // Not sure why this has to be done.
        this.initAccounts();
 
-       if (!registerBikeOnBlockchain()) {
+       if (!registerItemOnBlockchain()) {
          return;
        }
      },
@@ -540,17 +540,17 @@ var app = new Vue({
      },
      clearRegistrationForm:function() {
         this.pooFileSelected = false;
-        this.bikeManufacturer = '000';
-        this.bikeSerialNumber = '';
-        this.bikeIpfsHash = '';
+        this.itemManufacturer = '000';
+        this.itemSerialNumber = '';
+        this.itemIpfsHash = '';
         this.showDetailsModal = false;
-        this.bikeManufacturerSelected = false;
+        this.itemManufacturerSelected = false;
         this.pooFileLoaded = false;
         this.processingMessage = '';
      },
      pooFileSelectedEvent:function(event) {
         this.pooFileSelected = true;
-        this.bikeIpfsHash = '';
+        this.itemIpfsHash = '';
      },
      uploadFileToIpfs:function () {
         var self = this;
@@ -574,7 +574,7 @@ var app = new Vue({
          const pooFile = document.getElementById("pooFile");
          const reader = new FileReader();
          const fileContents = await readUploadedFileAsBuffer(pooFile.files[0]);
-         const ipfs = window.IpfsApi('bikedeed.io', 443, {protocol:'https'} ); // Connect to IPFS
+         const ipfs = window.IpfsApi('itemdeed.io', 443, {protocol:'https'} ); // Connect to IPFS
          const buf = Buffer.from(fileContents); // Convert data into buffer
          this.showUploadSpinner = true;
          ipfs.files.add(buf, (err, result) => { // Upload buffer to IPFS
@@ -585,8 +585,8 @@ var app = new Vue({
              this.showUploadSpinner = false;
              return;
            }
-           this.bikeIpfsHash = result[0].hash;
-           this.bikeUrl = BIKEDEED_IPFS_URL + this.bikeIpfsHash;
+           this.itemIpfsHash = result[0].hash;
+           this.itemUrl = ITEMDEED_IPFS_URL + this.itemIpfsHash;
            this.showUploadSpinner = false;
            this.pooFileLoaded = true;
         });
@@ -604,11 +604,11 @@ var app = new Vue({
     }
   },
   computed: {
-    filteredBikes: function() {
-      return this.bikelist.filter((bike) => {
+    filteredItems: function() {
+      return this.itemlist.filter((item) => {
         var searchString = this.search.toLowerCase();
-        var label = this.bikeLabel(bike).toLowerCase();
-        return (label.match(searchString) || bike.serialNumber.toLowerCase().match(searchString));
+        var label = this.itemLabel(item).toLowerCase();
+        return (label.match(searchString) || item.serialNumber.toLowerCase().match(searchString));
       });
     }
   }

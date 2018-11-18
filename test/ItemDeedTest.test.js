@@ -1,13 +1,13 @@
 import assertRevert from './helpers/assertRevert';
 const BigNumber = web3.BigNumber;
-const BikeDeed = artifacts.require('BikeDeed.sol');
+const ItemDeed = artifacts.require('ItemDeed.sol');
 
 require('chai')
   .use(require('chai-as-promised'))
   .use(require('chai-bignumber')(BigNumber))
   .should();
 
-contract('BikeDeed', accounts => {
+contract('ItemDeed', accounts => {
   let deed = null;
   const _unknownDeedId = 999;
 
@@ -37,7 +37,7 @@ contract('BikeDeed', accounts => {
   const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
   beforeEach(async function () {
-    deed = await BikeDeed.new({ from: _creator });
+    deed = await ItemDeed.new({ from: _creator });
     deed.setUrl(_deedUrl);
     await deed.create(_serialNumber1, _manufacturer1, _ipfsHash1, _firstOwner);
     await deed.create(_serialNumber2, _manufacturer2, _ipfsHash2, _secondOwner);

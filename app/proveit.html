@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-<title>BikeDeed</title>
+<title>ItemDeed</title>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
@@ -40,7 +40,7 @@ img {
 
           <div class="modal-header">
             <slot name="header">
-              Bike Details
+              Item Details
             </slot>
           </div>
 
@@ -71,7 +71,7 @@ img {
 
           <div class="modal-header">
             <slot name="header">
-              Bike Details
+              Item Details
             </slot>
           </div>
 
@@ -99,10 +99,10 @@ img {
 <div id="app" v-cloak>
 <nav class="w3-topnav w3-small w3-center">
   <a href="index.html" class="w3-bar-item w3-button w3-padding-small w3-hover-black">
-    LIST BIKES
+    LIST ITEMS
   </a>
   <a href="register.html" class="w3-bar-item w3-button w3-padding-small w3-hover-black">
-    ADD A BIKE
+    ADD A ITEM
   </a>
 </nav>
 
@@ -110,7 +110,7 @@ img {
 <div class="w3-padding-small">
   <!-- Header/Home -->
   <header class="w3-container w3-padding-small w3-center w3-black">
-    <a href="https://bikedeed.io"><img src="bikedeedlogo.png"></a>
+    <a href="https://permanonce.io"><img src="itemdeedlogo.png"></a>
     <div v-if="web3Enabled">
       <p>{{ networkLabel }} </p>
     </div>
@@ -134,10 +134,10 @@ img {
     </div>
     <div v-else class="w3-text-grey">
          The ability to scan QR Codes is limited to Mobile devices. <br>
-         Install either the <a href="https://trustwalletapp.com">Trust</a> or <a href="https://www.cipherbrowser.com">Cipher</a> Mobile Apps and use it to open "http://bikedeed.io/app".
+         Install either the <a href="https://trustwalletapp.com">Trust</a> or <a href="https://www.cipherbrowser.com">Cipher</a> Mobile Apps and use it to open "http://permanonce.io/app".
 <!--
       <label class=qrcode-text-input>
-         <input type="text" id="bikeId" v-model="bikeId" :placeholder="bikeId">
+         <input type="text" id="itemId" v-model="itemId" :placeholder="itemId">
          <button type="button" class="w3-padding-small w3-button w3-hover-black" v-on:click="verifyOwnership()">Verify Ownership</button></p>
       </label>
 -->
@@ -145,14 +145,14 @@ img {
   </div>
 
   <modal v-if="showDetailsModal" @close="showDetailsModal=false">
-    <h3 slot="header">You don't own this Bike!</h3>
+    <h3 slot="header">You don't own this Item!</h3>
     <span slot="body">
-      <p>Manufacturer: {{ lookupManufacturerLabel(bikeManufacturer) }}</p>
-      <p>Serial Number: {{ bikeSerialNumber }}</p>
-      <p>Owner Address: <a v-bind:href="'https://etherscan.io/address/' +  bikeOwner">{{bikeOwner}}</a></p>
+      <p>Manufacturer: {{ lookupManufacturerLabel(itemManufacturer) }}</p>
+      <p>Serial Number: {{ itemSerialNumber }}</p>
+      <p>Owner Address: <a v-bind:href="'https://etherscan.io/address/' +  itemOwner">{{itemOwner}}</a></p>
       <div class="row">
         <div class="column">
-          <img v-bind:src="bikeUrl" v-on:click="displayMetaData()">
+          <img v-bind:src="itemUrl" v-on:click="displayMetaData()">
         </div>
         <div class="column">
           <canvas id="canvas"></canvas>
@@ -160,19 +160,19 @@ img {
           Scan with Mobile dApp
         </div>
       </div>
-      <p>Date Created: {{ bikeDateCreated }}</p>
+      <p>Date Created: {{ itemDateCreated }}</p>
     </span>
   </modal>
 
   <modal2 v-if="showMyDetailsModal" @close="showMyDetailsModal=false">
-    <h3 slot="header">Congratulation! You own this Bike!</h3>
+    <h3 slot="header">Congratulation! You own this Item!</h3>
     <span slot="body">
-      <p>Manufacturer: {{ lookupManufacturerLabel(bikeManufacturer) }}</p>
-      <p>Serial Number: {{ bikeSerialNumber }}</p>
-      <p>Owner Address: <a v-bind:href="'https://etherscan.io/address/' +  bikeOwner">{{bikeOwner}}</a></p>
+      <p>Manufacturer: {{ lookupManufacturerLabel(itemManufacturer) }}</p>
+      <p>Serial Number: {{ itemSerialNumber }}</p>
+      <p>Owner Address: <a v-bind:href="'https://etherscan.io/address/' +  itemOwner">{{itemOwner}}</a></p>
       <div class="row">
         <div class="column">
-          <img v-bind:src="bikeUrl" v-on:click="displayMetaData()">
+          <img v-bind:src="itemUrl" v-on:click="displayMetaData()">
         </div>
         <div class="column">
           <canvas id="canvas"></canvas>
@@ -180,11 +180,11 @@ img {
           For Mobile dApp
         </div>
       </div>
-      <p>Date Created: {{ bikeDateCreated }}</p>
+      <p>Date Created: {{ itemDateCreated }}</p>
       <p>{{ processingMessage }} <i v-show="showSpinner" class="fa fa-spinner fa-spin" style="font-size:24px;color:white"></i></p>
-      <input v-show="displayRegistrationComponents" type="text" id="newOwnerAddress" v-model="newOwnerAddress" :placeholder="bikeOwner">
-      <button v-show="displayRegistrationComponents" type="button" class="button-modal-default" v-on:click="transferOwnership()">Transfer Bike Deed</button></p>
-      <button v-show="displayRegistrationComponents" type="button" class="button-modal-default" v-on:click="deleteBikeDeed()">Delete Bike Deed</button></p>
+      <input v-show="displayRegistrationComponents" type="text" id="newOwnerAddress" v-model="newOwnerAddress" :placeholder="itemOwner">
+      <button v-show="displayRegistrationComponents" type="button" class="button-modal-default" v-on:click="transferOwnership()">Transfer Item Deed</button></p>
+      <button v-show="displayRegistrationComponents" type="button" class="button-modal-default" v-on:click="deleteItemDeed()">Delete Item Deed</button></p>
     </span>
 
 
@@ -198,6 +198,6 @@ img {
 
 <!-- END App div -->
 </div>
-<script type="text/javascript" src="bikeappvue.js">bikeppvue here</script>
+<script type="text/javascript" src="itemappvue.js">itemppvue here</script>
 </body>
 </html>

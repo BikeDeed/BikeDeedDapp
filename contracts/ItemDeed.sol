@@ -8,17 +8,17 @@ import "./ERC721Metadata.sol";
 /*
   Notes on this ERC721 implementation:
 
-  A simple Bike deed.
+  A simple Item deed.
  */
 
-contract BikeDeed is ERC721Deed, ERC721Metadata, Pausable {
+contract ItemDeed is ERC721Deed, ERC721Metadata, Pausable {
 
   using SafeMath for uint256;
 
 
   /* Events */
 
-  // When a dead is created by the contract owner.
+  // When a deed is created by the contract owner.
   event Creation(uint256 indexed id, string serialNumber, string manufacturer, string ipfsHash, address owner);
 
   // When a deed needs to be removed. The contract owner needs to own the deed in order to be able to destroy it.
@@ -27,8 +27,8 @@ contract BikeDeed is ERC721Deed, ERC721Metadata, Pausable {
 
   /* The actual deeds */
 
-  // The data structure of the Bike deed
-  struct Bike {
+  // The data structure of the Item deed
+  struct Item {
     string serialNumber;
     string manufacturer;
     string ipfsHash;
@@ -36,12 +36,12 @@ contract BikeDeed is ERC721Deed, ERC721Metadata, Pausable {
     uint256 deleted;
   }
 
-  // map a bike name to an array of IPFS Hashses
+  // map a item name to an array of IPFS Hashses
   mapping (uint256 => string[]) private ipfsImages;
 
-  // Mapping from _deedId to Bike
-  //mapping (uint256 => Bike) private deeds;
-  mapping (uint256 => Bike) public deeds;
+  // Mapping from _deedId to Item 
+  //mapping (uint256 => Item) private deeds;
+  mapping (uint256 => Item) public deeds;
 
   // Mapping from deed name to boolean indicating if the name is already taken
   mapping (string => bool) private deedNameExists;
@@ -69,7 +69,7 @@ contract BikeDeed is ERC721Deed, ERC721Metadata, Pausable {
       bytes4(keccak256('symbol()')) ^
       bytes4(keccak256('deedUri(uint256)'));
 
-  function BikeDeed() public {}
+  function ItemDeed() public {}
 
   // The contract owner can withdraw funds that were received this way.
   function() public payable {}
@@ -96,12 +96,12 @@ contract BikeDeed is ERC721Deed, ERC721Metadata, Pausable {
 
   function name()
   public pure returns (string) {
-    return "BikeDeed";
+    return "ItemDeed";
   }
 
   function symbol()
   public pure returns (string) {
-    return "BIKE";
+    return "ITEM";
   }
 
   function supportsInterface(bytes4 _interfaceID)
@@ -139,7 +139,7 @@ contract BikeDeed is ERC721Deed, ERC721Metadata, Pausable {
   }
 
   function deed(uint256 _deedId)
-  external view returns (Bike) {
+  external view returns (Item) {
     return deeds[_deedId];
   }
 
@@ -156,7 +156,7 @@ contract BikeDeed is ERC721Deed, ERC721Metadata, Pausable {
     super._mint(_owner, deedId);
     ipfsImages[deedId].push(_ipfsHash);
 
-    deeds[deedId] = Bike({
+    deeds[deedId] = Item({
       serialNumber: _serialNumber,
       manufacturer: _manufacturer,
       ipfsHash: _ipfsHash,

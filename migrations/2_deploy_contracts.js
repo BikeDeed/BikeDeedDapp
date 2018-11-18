@@ -1,5 +1,5 @@
-var BikeDeed = artifacts.require("./BikeDeed.sol");
+var ItemDeed = artifacts.require("./ItemDeed.sol");
 
 module.exports = function(deployer) {
-  deployer.deploy(BikeDeed);
+  deployer.deploy(ItemDeed);
 };

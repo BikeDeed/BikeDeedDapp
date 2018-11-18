@@ -4,7 +4,7 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 module.exports = {
     mode: 'development',
     entry:  {
-      bikeappvue: __dirname + "/app/javascript/bikeappvue.js",
+      itemappvue: __dirname + "/app/javascript/itemappvue.js",
       vue: __dirname + "/app/javascript/vue.js",
     },
 
