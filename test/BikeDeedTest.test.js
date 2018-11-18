@@ -62,6 +62,16 @@ contract('BikeDeed', accounts => {
       it('verify ipfsHash existence', async function () {
         let ipfs1 = await deed.deedUri(0);
         assert.equal(ipfs1, (_deedUrl + _ipfsHash1));
+
+        // verify that there is 1 ipfs image
+        let ipfsImageCount = await deed.getIpfsImageCount(0);
+        assert.equal(ipfsImageCount, 1);
+
+        // add another ipfs image and verify that the count is 2
+        await deed.addIpfsImage(0, _ipfsHash2);
+        ipfsImageCount = await deed.getIpfsImageCount(0);
+        assert.equal(ipfsImageCount, 2);
+
         let ipfs2 = await deed.deedUri(1);
         assert.equal(ipfs2, (_deedUrl + _ipfsHash2));
         let ipfs3 = await deed.deedUri(2);

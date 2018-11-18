@@ -3,6 +3,7 @@ require("babel-polyfill");
 var HDWalletProvider = require("truffle-hdwallet-provider");
 // var infura_apikey = "<key>";
 // var mnemonic = "<bla bla bla>";
+var mnemonic = "candy maple cake sugar pudding cream honey ricsmooth crumble sweet treat";
 
 module.exports = {
   networks: {

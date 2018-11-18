@@ -19,7 +19,7 @@ contract BikeDeed is ERC721Deed, ERC721Metadata, Pausable {
   /* Events */
 
   // When a dead is created by the contract owner.
-  event Creation(uint256 indexed id, bytes32 indexed serialNumber, bytes32 indexed manufacturer, string ipfsHash, address owner);
+  event Creation(uint256 indexed id, string serialNumber, string manufacturer, string ipfsHash, address owner);
 
   // When a deed needs to be removed. The contract owner needs to own the deed in order to be able to destroy it.
   event Destruction(uint256 indexed id);
@@ -29,27 +29,28 @@ contract BikeDeed is ERC721Deed, ERC721Metadata, Pausable {
 
   // The data structure of the Bike deed
   struct Bike {
-    bytes32 name;
-    bytes32 serialNumber;
-    bytes32 manufacturer;
+    string serialNumber;
+    string manufacturer;
     string ipfsHash;
     uint256 created;
     uint256 deleted;
   }
+
+  // map a bike name to an array of IPFS Hashses
+  mapping (uint256 => string[]) private ipfsImages;
 
   // Mapping from _deedId to Bike
   //mapping (uint256 => Bike) private deeds;
   mapping (uint256 => Bike) public deeds;
 
   // Mapping from deed name to boolean indicating if the name is already taken
-  mapping (bytes32 => bool) private deedNameExists;
+  mapping (string => bool) private deedNameExists;
 
   // Needed to make all deeds discoverable. The length of this array also serves as our deed ID.
   uint256[] private deedIds;
 
-
   // The contract owner can change the base URL, in case it becomes necessary. It is needed for Metadata.
-  string public url = "http://ipfs.io/ipfs/";
+  string public url = "https://ipfs.io/ipfs/";
 
   // ERC-165 Metadata
   bytes4 internal constant INTERFACE_SIGNATURE_ERC165 = // 0x01ffc9a7
@@ -74,12 +75,14 @@ contract BikeDeed is ERC721Deed, ERC721Metadata, Pausable {
   function() public payable {}
 
   modifier onlyExistingNames(uint256 _deedId) {
-    require(deedNameExists[deeds[_deedId].name]);
+    string memory _name = _strConcat(deeds[_deedId].serialNumber,
+      deeds[_deedId].manufacturer);
+    require(deedNameExists[_name]);
     _;
   }
 
-  modifier noExistingNames(bytes32 _serialNumber, bytes32 _manufacturer) {
-    bytes32 _name = _buildName(_serialNumber, _manufacturer);
+  modifier noExistingNames(string _serialNumber, string _manufacturer) {
+    string memory _name = _strConcat(_serialNumber, _manufacturer);
     require(!deedNameExists[_name]);
     _;
   }
@@ -88,7 +91,6 @@ contract BikeDeed is ERC721Deed, ERC721Metadata, Pausable {
     require(deeds[_deedId].deleted == 0);
     _;
   }
-
 
    /* ERC721Metadata */
 
@@ -111,14 +113,23 @@ contract BikeDeed is ERC721Deed, ERC721Metadata, Pausable {
     );
   }
 
+  function addIpfsImage(uint256 _deedId, string _ipfsHash) {
+    ipfsImages[_deedId].push(_ipfsHash);
+  }
+
+  function getIpfsImageCount(uint256 _deedId)
+    external view returns (uint256 count) {
+    return ipfsImages[_deedId].length;
+  }
+
   function deedUri(uint256 _deedId)
   external view onlyExistingNames(_deedId) returns (string _uri) {
-    _uri = _strConcat(url, deeds[_deedId].ipfsHash);
+    return _strConcat(url, ipfsImages[_deedId][0]);
   }
 
   function deedName(uint256 _deedId)
-  public view onlyExistingNames(_deedId) returns (string _name) {
-    _name = _bytes32ToString(deeds[_deedId].name);
+    public view onlyExistingNames(_deedId) returns (string _name) {
+    _name = _strConcat(deeds[_deedId].serialNumber, deeds[_deedId].manufacturer);
   }
 
   /* Enable listing of all deeds (alternative to ERC721Enumerable to avoid having to work with arrays). */
@@ -136,15 +147,16 @@ contract BikeDeed is ERC721Deed, ERC721Metadata, Pausable {
 
   // Anyone creates deeds. Newly created deeds are initialised with
   // a derived name, serialNumber, manufacturer, owner address.
-  function create(bytes32 _serialNumber, bytes32 _manufacturer, string _ipfsHash, address _owner)
+  function create(string _serialNumber, string _manufacturer, string _ipfsHash, address _owner)
   public noExistingNames(_serialNumber, _manufacturer) {
-    bytes32 _name = _buildName(_serialNumber, _manufacturer);
+    string memory _name = _strConcat(_serialNumber, _manufacturer);
     deedNameExists[_name] = true;
     uint256 deedId = deedIds.length;
     deedIds.push(deedId);
     super._mint(_owner, deedId);
+    ipfsImages[deedId].push(_ipfsHash);
+
     deeds[deedId] = Bike({
-      name: _name,
       serialNumber: _serialNumber,
       manufacturer: _manufacturer,
       ipfsHash: _ipfsHash,
@@ -171,12 +183,6 @@ contract BikeDeed is ERC721Deed, ERC721Metadata, Pausable {
   }
 
   /* Private helper functions */
-  function _buildName(bytes32 _serialNumber, bytes32 _manufacturer)
-  private pure returns(bytes32) {
-     return _stringToBytes32(_strConcat(_bytes32ToString(_serialNumber),
-            _bytes32ToString(_manufacturer)));
-  }
-
   function _bytes32ToString(bytes32 _bytes32)
   private pure returns (string) {
     bytes memory bytesString = new bytes(32);

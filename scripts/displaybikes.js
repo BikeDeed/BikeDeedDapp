@@ -15,21 +15,25 @@ const displayBikes = async () => {
   let deed = await BikeDeed.deployed();
   let deedIds = await deed.ids();
 
-  const FIELD_NAME  = 0
-  const FIELD_SERIAL_NUMBER = 1
-  const FIELD_MANUFACTURER = 2
-  const FIELD_IPFS_HASH = 3
-  const FIELD_DATE_CREATED = 4
-  const FIELD_DATE_DELETED = 5
+  const FIELD_SERIAL_NUMBER = 0
+  const FIELD_MANUFACTURER = 1
+  const FIELD_IPFS_HASH = 2
+  const FIELD_DATE_CREATED = 3
+  const FIELD_DATE_DELETED = 4
 
   let bikeStructs = []
   for (let i = 0; i < deedIds.length; i++) {
     var deedId = deedIds[i];
     var bikeDeed = await deed.deeds(deedId);
     const bike = {
+      /*
         name:  web3.toAscii(bikeDeed[FIELD_NAME]),
         serialNumber: web3.toAscii(bikeDeed[FIELD_SERIAL_NUMBER]),
         manufacturer: web3.toAscii(bikeDeed[FIELD_MANUFACTURER]),
+        */
+        name:  bikeDeed[FIELD_SERIAL_NUMBER] + bikeDeed[FIELD_MANUFACTURER],
+        serialNumber: bikeDeed[FIELD_SERIAL_NUMBER],
+        manufacturer: bikeDeed[FIELD_MANUFACTURER],
         ipfsHash: bikeDeed[FIELD_IPFS_HASH],
         dateCreated: bikeDeed[FIELD_DATE_CREATED],
         dateDeleted: bikeDeed[FIELD_DATE_DELETED]

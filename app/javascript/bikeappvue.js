@@ -50,9 +50,9 @@ var app = new Vue({
         // Old Ropsten Address
         //contractAddress: '0xdeEe03988C64C3aa4fcFe36896c4272ACF490a33',
         // Mainnet
-        contractAddress: '0xa7aB6FcA68f407BB5258556af221dE9d8D1A94B5',
+        //contractAddress: '0xa7aB6FcA68f407BB5258556af221dE9d8D1A94B5',
         // Ganache Address???
-        //contractAddress: '0x8fac4e98317322f8069307ccfbb64e8fdd9c180d',
+        contractAddress: "0x0326f2995b5defb4c06cff408cad8328423c6947",
         userAccount: '',
         nametag: '',
         status: '',
@@ -210,12 +210,12 @@ var app = new Vue({
         let self = this;
         const loadBike = async (deedId) => {
           let deed = await BikeDeed.at(this.contractAddress);
-          const FIELD_NAME  = 0
-          const FIELD_SERIAL_NUMBER = 1
-          const FIELD_MANUFACTURER = 2
-          const FIELD_IPFS_HASH = 3
-          const FIELD_DATE_CREATED = 4
-          const FIELD_DATE_DELETED = 5
+
+          const FIELD_SERIAL_NUMBER = 0
+          const FIELD_MANUFACTURER = 1
+          const FIELD_IPFS_HASH = 2
+          const FIELD_DATE_CREATED = 3
+          const FIELD_DATE_DELETED = 4
 
           var bikeDeed = await deed.deeds(deedId);
           try {
@@ -228,9 +228,8 @@ var app = new Vue({
           var url = await deed.deedUri(deedId);
           const bike = {
             id: deedId,
-            name:  web3.toAscii(bikeDeed[FIELD_NAME]),
-            serialNumber: web3.toAscii(bikeDeed[FIELD_SERIAL_NUMBER]),
-            manufacturer: web3.toAscii(bikeDeed[FIELD_MANUFACTURER]).replace(/\u0000/g, ''),
+            serialNumber: bikeDeed[FIELD_SERIAL_NUMBER],
+            manufacturer: bikeDeed[FIELD_MANUFACTURER],
             ipfsHash: bikeDeed[FIELD_IPFS_HASH],
             dateCreated: bikeDeed[FIELD_DATE_CREATED],
             dateDeleted: bikeDeed[FIELD_DATE_DELETED],
@@ -250,12 +249,11 @@ var app = new Vue({
           let deed = await BikeDeed.at(this.contractAddress);
           let deedIds = await deed.ids();
 
-          const FIELD_NAME  = 0
-          const FIELD_SERIAL_NUMBER = 1
-          const FIELD_MANUFACTURER = 2
-          const FIELD_IPFS_HASH = 3
-          const FIELD_DATE_CREATED = 4
-          const FIELD_DATE_DELETED = 5
+          const FIELD_SERIAL_NUMBER = 0
+          const FIELD_MANUFACTURER = 1
+          const FIELD_IPFS_HASH = 2
+          const FIELD_DATE_CREATED = 3
+          const FIELD_DATE_DELETED = 4
 
           for (let i = 0; i < deedIds.length; i++) {
             var deedId = deedIds[i];
@@ -269,9 +267,8 @@ var app = new Vue({
             var url = await deed.deedUri(deedId);
             const bike = {
               id: deedId,
-              name:  web3.toAscii(bikeDeed[FIELD_NAME]),
-              serialNumber: web3.toAscii(bikeDeed[FIELD_SERIAL_NUMBER]),
-              manufacturer: web3.toAscii(bikeDeed[FIELD_MANUFACTURER]).replace(/\u0000/g, ''),
+              serialNumber: bikeDeed[FIELD_SERIAL_NUMBER],
+              manufacturer: bikeDeed[FIELD_MANUFACTURER],
               ipfsHash: bikeDeed[FIELD_IPFS_HASH],
               dateCreated: bikeDeed[FIELD_DATE_CREATED],
               dateDeleted: bikeDeed[FIELD_DATE_DELETED],
